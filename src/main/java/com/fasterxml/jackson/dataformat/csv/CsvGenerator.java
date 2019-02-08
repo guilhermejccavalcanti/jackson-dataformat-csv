@@ -4,7 +4,6 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
-
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.core.base.GeneratorBase;
 import com.fasterxml.jackson.core.json.JsonWriteContext;
@@ -12,15 +11,14 @@ import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.dataformat.csv.impl.CsvEncoder;
 
-public class CsvGenerator extends GeneratorBase
-{
+public class CsvGenerator extends GeneratorBase {
+
     /**
      * Enumeration that defines all togglable features for CSV writers
      * (if any: currently none)
      */
-    public enum Feature
-        implements FormatFeature // since 2.7
-    {
+    public enum Feature implements FormatFeature {
+
         /**
          * Feature that determines how much work is done before determining that
          * a column value requires quoting: when set as <code>true</code>, full
@@ -41,9 +39,7 @@ public class CsvGenerator extends GeneratorBase
          * 
          * @since 2.4
          */
-        STRICT_CHECK_FOR_QUOTING(false),
-
-        /**
+        STRICT_CHECK_FOR_QUOTING(false), /**
          * Feature that determines whether columns without matching value may be omitted,
          * when they are the last values of the row.
          * If <code>true</code>, values and separators between values may be omitted, to slightly reduce
@@ -52,9 +48,7 @@ public class CsvGenerator extends GeneratorBase
          * 
          * @since 2.4
          */
-        OMIT_MISSING_TAIL_COLUMNS(false),
-
-        /**
+        OMIT_MISSING_TAIL_COLUMNS(false), /**
          * Feature that determines whether values written as Strings (from <code>java.lang.String</code>
          * valued POJO properties) should be forced to be quoted, regardless of whether they
          * actually need this.
@@ -63,18 +57,17 @@ public class CsvGenerator extends GeneratorBase
          *
          * @since 2.5
          */
-        ALWAYS_QUOTE_STRINGS(false),
-        ;
+        ALWAYS_QUOTE_STRINGS(false);
 
         protected final boolean _defaultState;
+
         protected final int _mask;
-        
+
         /**
          * Method that calculates bit set (flags) of all features that
          * are enabled by default.
          */
-        public static int collectDefaults()
-        {
+        public static int collectDefaults() {
             int flags = 0;
             for (Feature f : values()) {
                 if (f.enabledByDefault()) {
@@ -90,28 +83,41 @@ public class CsvGenerator extends GeneratorBase
         }
 
         @Override
-        public boolean enabledIn(int flags) { return (flags & _mask) != 0; }
+        public boolean enabledIn(int flags) {
+            return (flags & _mask) != 0;
+        }
+
         @Override
-        public boolean enabledByDefault() { return _defaultState; }
+        public boolean enabledByDefault() {
+            return _defaultState;
+        }
+
         @Override
-        public int getMask() { return _mask; }
+        public int getMask() {
+            return _mask;
+        }
     }
 
-    protected final static long MIN_INT_AS_LONG = Integer.MIN_VALUE;
-    protected final static long MAX_INT_AS_LONG = Integer.MAX_VALUE;
-    
+    protected static final long MIN_INT_AS_LONG = Integer.MIN_VALUE;
+
+    protected static final long MAX_INT_AS_LONG = Integer.MAX_VALUE;
+
     /*
     /**********************************************************
     /* Configuration
     /**********************************************************
      */
+    private static final CsvSchema EMPTY_SCHEMA;
 
-    private final static CsvSchema EMPTY_SCHEMA;
     static {
         EMPTY_SCHEMA = CsvSchema.emptySchema();
     }
-    
-    final protected IOContext _ioContext;
+
+    static {
+        EMPTY_SCHEMA = CsvSchema.emptySchema();
+    }
+
+    protected final IOContext _ioContext;
 
     /**
      * Bit flag composed of bits that indicate which
@@ -133,14 +139,13 @@ public class CsvGenerator extends GeneratorBase
     /* Output state
     /**********************************************************
      */
-
     /**
      * Flag that indicates that we need to write header line, if
      * one is needed. Used because schema may be specified after
      * instance is constructed.
      */
     protected boolean _handleFirstLine = true;
-    
+
     /**
      * Index of column that we will be getting next, based on
      * field name call that was made.
@@ -185,18 +190,7 @@ public class CsvGenerator extends GeneratorBase
      */
     protected JsonWriteContext _skipWithin;
 
-    /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
-     */
-
-    /**
-     * @since 2.4
-     */
-    public CsvGenerator(IOContext ctxt, int jsonFeatures, int csvFeatures,
-            ObjectCodec codec, Writer out, CsvSchema schema)
-    {
+    public CsvGenerator(IOContext ctxt, int jsonFeatures, int csvFeatures, ObjectCodec codec, Writer out, CsvSchema schema) {
         super(jsonFeatures, codec);
         _ioContext = ctxt;
         _formatFeatures = csvFeatures;
@@ -204,21 +198,18 @@ public class CsvGenerator extends GeneratorBase
         _writer = new CsvEncoder(ctxt, csvFeatures, out, schema);
     }
 
-    public CsvGenerator(IOContext ctxt, int jsonFeatures, int csvFeatures,
-            ObjectCodec codec, CsvEncoder csvWriter)
-    {
+    public CsvGenerator(IOContext ctxt, int jsonFeatures, int csvFeatures, ObjectCodec codec, CsvEncoder csvWriter) {
         super(jsonFeatures, codec);
         _ioContext = ctxt;
         _formatFeatures = csvFeatures;
         _writer = csvWriter;
     }
-    
+
     /*                                                                                       
     /**********************************************************                              
     /* Versioned                                                                             
     /**********************************************************                              
      */
-
     @Override
     public Version version() {
         return PackageVersion.VERSION;
@@ -229,7 +220,6 @@ public class CsvGenerator extends GeneratorBase
     /* Overridden methods, configuration
     /**********************************************************
      */
-
     /**
      * No way (or need) to indent anything, so let's block any attempts.
      * (should we throw an exception instead?)
@@ -264,8 +254,7 @@ public class CsvGenerator extends GeneratorBase
     }
 
     @Override
-    public void setSchema(FormatSchema schema)
-    {
+    public void setSchema(FormatSchema schema) {
         if (schema instanceof CsvSchema) {
             if (_schema != schema) {
                 _schema = (CsvSchema) schema;
@@ -282,11 +271,9 @@ public class CsvGenerator extends GeneratorBase
     }
 
     @Override
-    public JsonGenerator overrideFormatFeatures(int values, int mask)
-    {
+    public JsonGenerator overrideFormatFeatures(int values, int mask) {
         int oldF = _formatFeatures;
         int newF = (_formatFeatures & ~mask) | (values & mask);
-
         if (oldF != newF) {
             _formatFeatures = newF;
             _writer.overrideFormatFeatures(newF);
@@ -299,34 +286,31 @@ public class CsvGenerator extends GeneratorBase
     /* Public API, capability introspection methods
     /**********************************************************
      */
-
     @Override
     public boolean canUseSchema(FormatSchema schema) {
         return (schema instanceof CsvSchema);
     }
-    
+
     @Override
     public boolean canOmitFields() {
-        // Nope: CSV requires at least a placeholder
         return false;
     }
 
     @Override
-    public boolean canWriteFormattedNumbers() { return true; }
+    public boolean canWriteFormattedNumbers() {
+        return true;
+    }
 
     /*
     /**********************************************************************
     /* Overridden methods; writing field names
     /**********************************************************************
      */
-    
     /* And then methods overridden to make final, streamline some
      * aspects...
      */
-
     @Override
-    public final void writeFieldName(String name) throws IOException
-    {
+    public final void writeFieldName(String name) throws IOException {
         if (_writeContext.writeFieldName(name) == JsonWriteContext.STATUS_EXPECT_VALUE) {
             _reportError("Can not write a field name, expecting a value");
         }
@@ -334,9 +318,7 @@ public class CsvGenerator extends GeneratorBase
     }
 
     @Override
-    public final void writeFieldName(SerializableString name) throws IOException
-    {
-        // Object is a value, need to verify it's allowed
+    public final void writeFieldName(SerializableString name) throws IOException {
         if (_writeContext.writeFieldName(name.getValue()) == JsonWriteContext.STATUS_EXPECT_VALUE) {
             _reportError("Can not write a field name, expecting a value");
         }
@@ -344,8 +326,7 @@ public class CsvGenerator extends GeneratorBase
     }
 
     @Override
-    public final void writeStringField(String fieldName, String value) throws IOException
-    {
+    public final void writeStringField(String fieldName, String value) throws IOException {
         if (_writeContext.writeFieldName(fieldName) == JsonWriteContext.STATUS_EXPECT_VALUE) {
             _reportError("Can not write a field name, expecting a value");
         }
@@ -353,31 +334,25 @@ public class CsvGenerator extends GeneratorBase
         writeString(value);
     }
 
-    private final void _writeFieldName(String name) throws IOException
-    {
-        // just find the matching index -- must have schema for that
+    private final void _writeFieldName(String name) throws IOException {
         if (_schema == null) {
-            // not a low-level error, so:
-            _reportMappingError("Unrecognized column '"+name+"', can not resolve without CsvSchema");
+            _reportMappingError("Unrecognized column \'" + name + "\', can not resolve without CsvSchema");
         }
-        if (_skipWithin != null) { // new in 2.7
+        if (_skipWithin != null) {
             _skipValue = true;
             _nextColumnByName = -1;
             return;
         }
-        // note: we are likely to get next column name, so pass it as hint
-        CsvSchema.Column col = _schema.column(name, _nextColumnByName+1);
+        CsvSchema.Column col = _schema.column(name, _nextColumnByName + 1);
         if (col == null) {
             if (isEnabled(JsonGenerator.Feature.IGNORE_UNKNOWN)) {
                 _skipValue = true;
                 _nextColumnByName = -1;
                 return;
             }
-            // not a low-level error, so:
-            _reportMappingError("Unrecognized column '"+name+"': known columns: "+_schema.getColumnDesc());
+            _reportMappingError("Unrecognized column \'" + name + "\': known columns: " + _schema.getColumnDesc());
         }
         _skipValue = false;
-        // and all we do is just note index to use for following value write
         _nextColumnByName = col.getIndex();
     }
 
@@ -386,7 +361,6 @@ public class CsvGenerator extends GeneratorBase
     /* Extended API, configuration
     /**********************************************************
      */
-
     public final boolean isEnabled(Feature f) {
         return (_formatFeatures & f.getMask()) != 0;
     }
@@ -415,25 +389,18 @@ public class CsvGenerator extends GeneratorBase
     /* Public API: low-level I/O
     /**********************************************************
      */
-
     @Override
     public final void flush() throws IOException {
         _writer.flush(isEnabled(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM));
     }
-    
-    @Override
-    public void close() throws IOException
-    {
-        super.close();
 
-        // Let's mark row as closed, if we had any...
+    @Override
+    public void close() throws IOException {
+        super.close();
         finishRow();
-        
-        // Write the header if necessary, occurs when no rows written
         if (_handleFirstLine) {
             _handleFirstLine();
         }
-
         _writer.close(_ioContext.isResourceManaged() || isEnabled(JsonGenerator.Feature.AUTO_CLOSE_TARGET));
     }
 
@@ -442,60 +409,50 @@ public class CsvGenerator extends GeneratorBase
     /* Public API: structural output
     /**********************************************************
      */
-
     @Override
-    public final void writeStartArray() throws IOException
-    {
+    public final void writeStartArray() throws IOException {
         _verifyValueWrite("start an array");
-        /* Ok to create root-level array to contain Objects/Arrays, but
-         * can not nest arrays in objects
-         */
         if (_writeContext.inObject()) {
-            if ((_skipWithin == null)
-                    && _skipValue && isEnabled(JsonGenerator.Feature.IGNORE_UNKNOWN)) {
+            if ((_skipWithin == null) && _skipValue && isEnabled(JsonGenerator.Feature.IGNORE_UNKNOWN)) {
                 _skipWithin = _writeContext;
-            } else if (!_skipValue) {
-                // First: column may have its own separator
-                String sep;
-                
-                if (_nextColumnByName >= 0) {
-                    CsvSchema.Column col = _schema.column(_nextColumnByName);
-                    sep = col.isArray() ? col.getArrayElementSeparator() : CsvSchema.NO_ARRAY_ELEMENT_SEPARATOR;
-                } else {
-                    sep = CsvSchema.NO_ARRAY_ELEMENT_SEPARATOR;
-                }
-                if (sep.isEmpty()) {
-                    if (!_schema.hasArrayElementSeparator()) {
-                        _reportError("CSV generator does not support Array values for properties without setting 'arrayElementSeparator' in schema");
+            } else {
+                if (!_skipValue) {
+                    String sep;
+                    if (_nextColumnByName >= 0) {
+                        CsvSchema.Column col = _schema.column(_nextColumnByName);
+                        sep = col.isArray() ? col.getArrayElementSeparator() : CsvSchema.NO_ARRAY_ELEMENT_SEPARATOR;
+                    } else {
+                        sep = CsvSchema.NO_ARRAY_ELEMENT_SEPARATOR;
                     }
-                    sep = _schema.getArrayElementSeparator();
+                    if (sep.isEmpty()) {
+                        if (!_schema.hasArrayElementSeparator()) {
+                            _reportError("CSV generator does not support Array values for properties without setting \'arrayElementSeparator\' in schema");
+                        }
+                        sep = _schema.getArrayElementSeparator();
+                    }
+                    _arraySeparator = sep;
+                    if (_arrayContents == null) {
+                        _arrayContents = new StringBuilder();
+                    } else {
+                        _arrayContents.setLength(0);
+                    }
+                    _arrayElements = 0;
                 }
-                _arraySeparator = sep;
-                if (_arrayContents == null) {
-                    _arrayContents = new StringBuilder();
-                } else {
-                    _arrayContents.setLength(0);
-                }
-                _arrayElements = 0;
             }
         } else {
             if (!_arraySeparator.isEmpty()) {
-                // also: no nested arrays, yet
                 _reportError("CSV generator does not support nested Array values");
             }
         }
         _writeContext = _writeContext.createChildArrayContext();
-        // and that's about it, really
     }
 
     @Override
-    public final void writeEndArray() throws IOException
-    {
+    public final void writeEndArray() throws IOException {
         if (!_writeContext.inArray()) {
-            _reportError("Current context not Array but "+_writeContext.typeDesc());
+            _reportError("Current context not Array but " + _writeContext.typeDesc());
         }
         _writeContext = _writeContext.getParent();
-        // 14-Dec-2015, tatu: To complete skipping of ignored structured value, need this:
         if (_skipWithin != null) {
             if (_writeContext == _skipWithin) {
                 _skipWithin = null;
@@ -506,22 +463,16 @@ public class CsvGenerator extends GeneratorBase
             _arraySeparator = CsvSchema.NO_ARRAY_ELEMENT_SEPARATOR;
             _writer.write(_columnIndex(), _arrayContents.toString());
         }
-        /* 20-Nov-2014, tatu: When doing "untyped"/"raw" output, this means that row
-         *    is now done. But not if writing such an array field, so:
-         */
         if (!_writeContext.inObject()) {
             finishRow();
         }
     }
 
     @Override
-    public final void writeStartObject() throws IOException
-    {
+    public final void writeStartObject() throws IOException {
         _verifyValueWrite("start an object");
-        // No nesting for objects; can write Objects inside logical root-level arrays.
-        // 14-Dec-2015, tatu: ... except, should be fine if we are ignoring the property
         if (_writeContext.inObject()) {
-            if (_skipWithin == null) { // new in 2.7
+            if (_skipWithin == null) {
                 if (_skipValue && isEnabled(JsonGenerator.Feature.IGNORE_UNKNOWN)) {
                     _skipWithin = _writeContext;
                 } else {
@@ -533,20 +484,17 @@ public class CsvGenerator extends GeneratorBase
     }
 
     @Override
-    public final void writeEndObject() throws IOException
-    {
+    public final void writeEndObject() throws IOException {
         if (!_writeContext.inObject()) {
-            _reportError("Current context not Object but "+_writeContext.typeDesc());
+            _reportError("Current context not Object but " + _writeContext.typeDesc());
         }
         _writeContext = _writeContext.getParent();
-        // 14-Dec-2015, tatu: To complete skipping of ignored structured value, need this:
         if (_skipWithin != null) {
             if (_writeContext == _skipWithin) {
                 _skipWithin = null;
             }
             return;
         }
-        // not 100% fool-proof, but chances are row should be done now
         finishRow();
     }
 
@@ -555,10 +503,8 @@ public class CsvGenerator extends GeneratorBase
     /* Output method implementations, textual
     /**********************************************************
      */
-
     @Override
-    public void writeString(String text) throws IOException
-    {
+    public void writeString(String text) throws IOException {
         if (text == null) {
             writeNull();
             return;
@@ -574,8 +520,7 @@ public class CsvGenerator extends GeneratorBase
     }
 
     @Override
-    public void writeString(char[] text, int offset, int len) throws IOException
-    {
+    public void writeString(char[] text, int offset, int len) throws IOException {
         _verifyValueWrite("write String value");
         if (!_skipValue) {
             if (!_arraySeparator.isEmpty()) {
@@ -587,8 +532,7 @@ public class CsvGenerator extends GeneratorBase
     }
 
     @Override
-    public final void writeString(SerializableString sstr) throws IOException
-    {
+    public final void writeString(SerializableString sstr) throws IOException {
         _verifyValueWrite("write String value");
         if (!_skipValue) {
             if (!_arraySeparator.isEmpty()) {
@@ -614,7 +558,6 @@ public class CsvGenerator extends GeneratorBase
     /* Output method implementations, unprocessed ("raw")
     /**********************************************************
      */
-
     @Override
     public void writeRaw(String text) throws IOException {
         _writer.writeRaw(text);
@@ -639,7 +582,6 @@ public class CsvGenerator extends GeneratorBase
     public void writeRawValue(String text) throws IOException {
         _verifyValueWrite("write Raw value");
         if (!_skipValue) {
-            // NOTE: ignore array stuff
             _writer.writeNonEscaped(_columnIndex(), text);
         }
     }
@@ -648,8 +590,7 @@ public class CsvGenerator extends GeneratorBase
     public void writeRawValue(String text, int offset, int len) throws IOException {
         _verifyValueWrite("write Raw value");
         if (!_skipValue) {
-            // NOTE: ignore array stuff
-            _writer.writeNonEscaped(_columnIndex(), text.substring(offset, offset+len));
+            _writer.writeNonEscaped(_columnIndex(), text.substring(offset, offset + len));
         }
     }
 
@@ -657,7 +598,6 @@ public class CsvGenerator extends GeneratorBase
     public void writeRawValue(char[] text, int offset, int len) throws IOException {
         _verifyValueWrite("write Raw value");
         if (!_skipValue) {
-            // NOTE: ignore array stuff
             _writer.writeNonEscaped(_columnIndex(), new String(text, offset, len));
         }
     }
@@ -667,22 +607,18 @@ public class CsvGenerator extends GeneratorBase
     /* Output method implementations, base64-encoded binary
     /**********************************************************
      */
-
     @Override
-    public void writeBinary(Base64Variant b64variant, byte[] data, int offset, int len) throws IOException, JsonGenerationException
-    {
+    public void writeBinary(Base64Variant b64variant, byte[] data, int offset, int len) throws IOException, JsonGenerationException {
         if (data == null) {
             writeNull();
             return;
         }
         _verifyValueWrite("write Binary value");
         if (!_skipValue) {
-            // ok, better just Base64 encode as a String...
-            if (offset > 0 || (offset+len) != data.length) {
-                data = Arrays.copyOfRange(data, offset, offset+len);
+            if (offset > 0 || (offset + len) != data.length) {
+                data = Arrays.copyOfRange(data, offset, offset + len);
             }
             String encoded = b64variant.encode(data);
-
             if (!_arraySeparator.isEmpty()) {
                 _addToArray(encoded);
             } else {
@@ -696,10 +632,8 @@ public class CsvGenerator extends GeneratorBase
     /* Output method implementations, primitive
     /**********************************************************
      */
-
     @Override
-    public void writeBoolean(boolean state) throws IOException
-    {
+    public void writeBoolean(boolean state) throws IOException {
         _verifyValueWrite("write boolean value");
         if (!_skipValue) {
             if (!_arraySeparator.isEmpty()) {
@@ -711,38 +645,27 @@ public class CsvGenerator extends GeneratorBase
     }
 
     @Override
-    public void writeNull() throws IOException
-    {
+    public void writeNull() throws IOException {
         _verifyValueWrite("write null value");
-
         if (!_skipValue) {
             if (!_arraySeparator.isEmpty()) {
                 _addToArray(_schema.getNullValueOrEmpty());
-            } else if (_writeContext.inObject()) {
-                _writer.writeNull(_columnIndex());
-            } else if (_writeContext.inArray()) {
-                // [dataformat-csv#106]: Need to make sure we don't swallow nulls in arrays either
-                // 04-Jan-2016, tatu: but check for case of array-wrapping, in which case null stands for absence
-                //   of Object. In this case, could either add an empty row, or skip -- for now, we'll
-                //   just skip; can change, if so desired, to expose "root null" as empty rows, possibly
-                //   based on either schema property, or CsvGenerator.Feature.
-                //  Note: if nulls are to be written that way, would need to call `finishRow()` right after `writeNull()`
-                if (!_writeContext.getParent().inRoot()) {
+            } else {
+                if (_writeContext.inObject()) {
                     _writer.writeNull(_columnIndex());
+                } else {
+                    if (_writeContext.inArray()) {
+                        if (!_writeContext.getParent().inRoot()) {
+                            _writer.writeNull(_columnIndex());
+                        }
+                    }
                 }
-
-                // ... so, for "root-level nulls" (with or without array-wrapping), we would do:
-                /*
-                _writer.writeNull(_columnIndex());
-                finishRow();
-*/
             }
         }
     }
 
     @Override
-    public void writeNumber(int v) throws IOException
-    {
+    public void writeNumber(int v) throws IOException {
         _verifyValueWrite("write number");
         if (!_skipValue) {
             if (!_arraySeparator.isEmpty()) {
@@ -754,9 +677,7 @@ public class CsvGenerator extends GeneratorBase
     }
 
     @Override
-    public void writeNumber(long v) throws IOException
-    {
-        // First: maybe 32 bits is enough?
+    public void writeNumber(long v) throws IOException {
         if (v <= MAX_INT_AS_LONG && v >= MIN_INT_AS_LONG) {
             writeNumber((int) v);
             return;
@@ -772,8 +693,7 @@ public class CsvGenerator extends GeneratorBase
     }
 
     @Override
-    public void writeNumber(BigInteger v) throws IOException
-    {
+    public void writeNumber(BigInteger v) throws IOException {
         if (v == null) {
             writeNull();
             return;
@@ -784,27 +704,12 @@ public class CsvGenerator extends GeneratorBase
                 _addToArray(String.valueOf(v));
             } else {
                 _writer.write(_columnIndex(), v.toString());
-
             }
         }
     }
-    
-    @Override
-    public void writeNumber(double v) throws IOException
-    {
-        _verifyValueWrite("write number");
-        if (!_skipValue) {
-            if (!_arraySeparator.isEmpty()) {
-                _addToArray(String.valueOf(v));
-            } else {
-                _writer.write(_columnIndex(), v);
-            }
-        }
-    }    
 
     @Override
-    public void writeNumber(float v) throws IOException
-    {
+    public void writeNumber(double v) throws IOException {
         _verifyValueWrite("write number");
         if (!_skipValue) {
             if (!_arraySeparator.isEmpty()) {
@@ -816,16 +721,26 @@ public class CsvGenerator extends GeneratorBase
     }
 
     @Override
-    public void writeNumber(BigDecimal v) throws IOException
-    {
+    public void writeNumber(float v) throws IOException {
+        _verifyValueWrite("write number");
+        if (!_skipValue) {
+            if (!_arraySeparator.isEmpty()) {
+                _addToArray(String.valueOf(v));
+            } else {
+                _writer.write(_columnIndex(), v);
+            }
+        }
+    }
+
+    @Override
+    public void writeNumber(BigDecimal v) throws IOException {
         if (v == null) {
             writeNull();
             return;
         }
         _verifyValueWrite("write number");
         if (!_skipValue) {
-            String str = isEnabled(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN)
-                    ? v.toPlainString() : v.toString();
+            String str = isEnabled(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN) ? v.toPlainString() : v.toString();
             if (!_arraySeparator.isEmpty()) {
                 _addToArray(String.valueOf(v));
             } else {
@@ -835,8 +750,7 @@ public class CsvGenerator extends GeneratorBase
     }
 
     @Override
-    public void writeNumber(String encodedValue) throws IOException
-    {
+    public void writeNumber(String encodedValue) throws IOException {
         if (encodedValue == null) {
             writeNull();
             return;
@@ -850,29 +764,21 @@ public class CsvGenerator extends GeneratorBase
             }
         }
     }
-    
+
     /*
     /**********************************************************
     /* Overrides for field methods
     /**********************************************************
      */
-
     @Override
-    public void writeOmittedField(String fieldName) throws IOException
-    {
-        // Hmmh. Should we require a match? Actually, let's use logic: if field found,
-        // assumption is we must add a placeholder; if not, we can merely ignore
+    public void writeOmittedField(String fieldName) throws IOException {
         CsvSchema.Column col = _schema.column(fieldName);
         if (col == null) {
-            // assumed to have been removed from schema too
         } else {
-            // basically combination of "writeFieldName()" and "writeNull()"
             if (_writeContext.writeFieldName(fieldName) == JsonWriteContext.STATUS_EXPECT_VALUE) {
                 _reportError("Can not skip a field, expecting a value");
             }
-            // and all we do is just note index to use for following value write
             _nextColumnByName = col.getIndex();
-            // We can basically copy what 'writeNull()' does...
             _verifyValueWrite("skip positional value due to filtering");
             _writer.write(_columnIndex(), "");
         }
@@ -883,13 +789,11 @@ public class CsvGenerator extends GeneratorBase
     /* Implementations for methods from base class
     /**********************************************************
      */
-    
     @Override
-    protected final void _verifyValueWrite(String typeMsg) throws IOException
-    {
+    protected final void _verifyValueWrite(String typeMsg) throws IOException {
         int status = _writeContext.writeValue();
         if (status == JsonWriteContext.STATUS_EXPECT_NAME) {
-            _reportError("Can not "+typeMsg+", expecting field name");
+            _reportError("Can not " + typeMsg + ", expecting field name");
         }
         if (_handleFirstLine) {
             _handleFirstLine();
@@ -906,7 +810,6 @@ public class CsvGenerator extends GeneratorBase
     /* Internal methods, error reporting
     /**********************************************************
      */
-
     /**
      * Method called when there is a problem related to mapping data
      * (compared to a low-level generation); if so, should be surfaced
@@ -916,7 +819,6 @@ public class CsvGenerator extends GeneratorBase
      */
     protected void _reportMappingError(String msg) throws JsonProcessingException {
         throw JsonMappingException.from(this, msg);
-//        throw new JsonGenerationException(msg, this);
     }
 
     /*
@@ -924,11 +826,9 @@ public class CsvGenerator extends GeneratorBase
     /* Internal methods, other
     /**********************************************************
      */
-
-    protected final int _columnIndex()
-    {
+    protected final int _columnIndex() {
         int ix = _nextColumnByName;
-        if (ix < 0) { // if we had one, remove now
+        if (ix < 0) {
             ix = _writer.nextColumnIndex();
         }
         return ix;
@@ -939,18 +839,16 @@ public class CsvGenerator extends GeneratorBase
      * will flush possibly buffered column values, append linefeed
      * and reset state appropriately.
      */
-    protected void finishRow() throws IOException
-    {
+    protected void finishRow() throws IOException {
         _writer.endRow();
         _nextColumnByName = -1;
     }
 
-    protected void _handleFirstLine() throws IOException
-    {
+    protected void _handleFirstLine() throws IOException {
         _handleFirstLine = false;
         if (_schema.usesHeader()) {
             int count = _schema.size();
-            if (count == 0) { 
+            if (count == 0) {
                 _reportMappingError("Schema specified that header line is to be written; but contains no column names");
             }
             for (CsvSchema.Column column : _schema) {
@@ -967,7 +865,7 @@ public class CsvGenerator extends GeneratorBase
         ++_arrayElements;
         _arrayContents.append(value);
     }
-    
+
     protected void _addToArray(char[] value) {
         if (_arrayElements > 0) {
             _arrayContents.append(_arraySeparator);
